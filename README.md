@@ -26,16 +26,8 @@ Projekt w języku Python umożliwiający budowę i operacje na strukturach drzew
 
 ## Funkcje do zaimplementowania
 
-- [ ] Algorytm równoważenia drzewa BST (DSW lub usuwanie korzenia)
-- [ ] Preorder drzewa **przed i po** zrównoważeniu
-- [ ] Pomiar czasu działania operacji:
-  - Tworzenie drzewa
-  - Wyszukiwanie elementu maksymalnego
-  - Równoważenie drzewa BST
-- [ ] Generator danych testowych:
-  - Ciągi losowe
-  - Ciągi posortowane
-- [ ] Automatyczne testy porównawcze dla różnych `n`
-- [ ] Eksport wyników testów
+- Algorytm równoważenia drzewa BST przez rotacje (algorytm DSW) lub przez usuwanie korzenia
+- Pomiar czasu działania operacji
+- Generator danych testowych
 
 ---
