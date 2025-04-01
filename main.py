@@ -1,4 +1,10 @@
 import os
+import time
+import random
+import sys
+
+sys.setrecursionlimit(10 ** 6)
+
 
 # =============================================================================
 # Klasa reprezentująca węzeł drzewa
@@ -19,6 +25,7 @@ class Node:
 # - Funkcja FCFS tworzy BST według kolejności wstawiania (First-Come, First-Served).
 # - Funkcje HMIN budują kopiec minimalny jako drzewo.
 # =============================================================================
+is_HMIN = False
 
 def AVL(lst):
     """
@@ -34,8 +41,8 @@ def AVL(lst):
     mediana = len(lst) // 2
     node = Node(lst[mediana])
     # Rekurencyjne budowanie lewego i prawego poddrzewa
-    node.left = AVL(lst[:mediana])
-    node.right = AVL(lst[mediana + 1:])
+    node.right = AVL(lst[:mediana])
+    node.left = AVL(lst[mediana + 1:])
     return node
 
 
@@ -161,10 +168,13 @@ def znajdz_min_i_max(node):
     """
     path_min, path_max = [], []
     current = node
-    while current:
-        path_min.append(current.key)
-        current = current.left
-    current = node
+    if is_HMIN:
+        path_min = [node.key]
+    else:
+        while current:
+            path_min.append(current.key)
+            current = current.left
+        current = node
     while current:
         path_max.append(current.key)
         current = current.right
@@ -206,10 +216,21 @@ def wypisz_malejaco(node):
 
     :param node: Korzeń drzewa.
     """
-    if node:
-        wypisz_malejaco(node.right)
-        print(node.key, end=" ")
-        wypisz_malejaco(node.left)
+
+    def collect_keys(node):
+        if node is None:
+            return []
+        return collect_keys(node.left) + [node.key] + collect_keys(node.right)
+
+    if is_HMIN:
+        nodes = list(collect_keys(node))
+        heap_sort(nodes)
+        print(nodes)
+    else:
+        if node:
+            wypisz_malejaco(node.right)
+            print(node.key, end=" ")
+            wypisz_malejaco(node.left)
 
 
 # =============================================================================
@@ -238,9 +259,7 @@ def build_complete_tree(lst, i=0):
     return node
 
 
-
 def HMIN(lst):
-
     """
     Buduje kopiec minimalny (HMIN) z listy.
     Najpierw buduje kompletne drzewo binarne, a następnie przekształca je w kopiec,
@@ -249,6 +268,10 @@ def HMIN(lst):
     :param lst: Lista elementów.
     :return: Korzeń kopca minimalnego.
     """
+
+    global is_HMIN
+    is_HMIN = True
+
     def heapify_tree(node):
         """
         Przekształca drzewo w kopiec minimalny (min-heap) metodą postorder.
@@ -286,48 +309,125 @@ def HMIN(lst):
 # przez heap_sort, która buduje kopiec w tablicy.
 # =============================================================================
 
+def tworzenie_kopca(t, n, i):
+    najmniejszy=i
+    #sprawdzamy czy lewa gałąź istnieje i czy jest mniejsza od korzenia
+    if i * 2 + 1 <n and t[i * 2 + 1] < t[najmniejszy]:
+        najmniejszy = i * 2 +1
 
-def heap_sort(arr):
-    """
-    Sortuje tablicę metodą heapsort z użyciem kopca minimalnego.
-    Najpierw buduje kopiec (min-heap), a następnie powtarza operację wyciągania najmniejszego
-    elementu, umieszczając go na końcu tablicy. Na końcu odwracamy tablicę, aby otrzymać porządek rosnący.
+    # sprawdzamy czy lewa gałąź istnieje i czy jest mniejsza od korzenia
+    if i * 2 + 2 < n and t[i * 2 + 2] < t[najmniejszy]:
+        najmniejszy = i * 2 + 2
 
-    :param arr: Lista do posortowania.
-    :return: Posortowana lista w porządku rosnącym.
-    """
+    if najmniejszy != i:
+        t[i],t[najmniejszy] = t[najmniejszy],t[i]
+        # sprawdzamy ponowonie miejsce z ktorym zamienilismy wartosci
+        tworzenie_kopca(t,n,najmniejszy)
 
-    def heapify_array(arr, n, i):
-        """
-        Przekształca poddrzewo w tablicy (reprezentacja kopca) w kopiec minimalny.
-        Dla danego indeksu i sprawdza, czy lewy i prawy potomek mają większe wartości.
-        Jeśli nie, zamienia elementy i rekurencyjnie heapify.
+def heap_sort(t):
+    # za pomoca petli i funkcji tworzymy pelny kopiec
+    # zaczynyamy od pierwszego rodzica czyli n//2
+    for i in range(len(t)//2,-1,-1):
+        tworzenie_kopca(t,len(t),i)
 
-        :param arr: Lista reprezentująca kopiec.
-        :param n: Rozmiar kopca (część tablicy do rozpatrzenia).
-        :param i: Indeks korzenia poddrzewa.
-        """
-        smallest = i
-        left = 2 * i + 1
-        right = 2 * i + 2
-        if left < n and arr[left] < arr[smallest]:
-            smallest = left
-        if right < n and arr[right] < arr[smallest]:
-            smallest = right
-        if smallest != i:
-            arr[i], arr[smallest] = arr[smallest], arr[i]
-            heapify_array(arr, n, smallest)
+    #zaczynamy wlasciwe sortowanie
+    for i in range(len(t) - 1, 0, -1):
+        t[i],t[0] = t[0],t[i]
+        tworzenie_kopca(t,i,0)
+    return t
 
-    n = len(arr)
-    # Budowanie kopca – zaczynamy od ostatniego rodzica.
-    for i in range(n // 2 - 1, -1, -1):
-        heapify_array(arr, n, i)
-    # Wyciągamy elementy z kopca jeden po drugim.
-    for i in range(n - 1, 0, -1):
-        arr[0], arr[i] = arr[i], arr[0]
-        heapify_array(arr, i, 0)
-    # Kopiec minimalny daje sortowanie malejące – odwracamy, by uzyskać kolejność rosnącą.
-    return arr
+
+# =============================================================================
+# ALGORTYM ROWNOWAŻENIA DRZEWA ITERACYJNYM USUWANIEM WĘZŁÓW
+# =============================================================================
+
+def wspolczynik_rownowagi(node):
+    """Oblicza współczynnik równowagi """
+    if node is None:
+        return 0
+    return wysokosc(node.left) - wysokosc(node.right)
+
+
+def znajdz_niezbalansowany_element(root):
+    """Znajduje pierwszy niebalansowany węzeł metodą level-order"""
+    queue = [root]
+    while queue:
+        node = queue.pop(0)
+        if abs(wspolczynik_rownowagi(node)) > 1:
+            return node
+        if node.left:
+            queue.append(node.left)
+        if node.right:
+            queue.append(node.right)
+    return None
+
+
+def get_max(node):
+    """Znajduje maksymalny węzeł w poddrzewie"""
+    while node and node.right:
+        node = node.right
+    return node
+
+
+def get_min(node):
+    """Znajduje minimalny węzeł w poddrzewie"""
+    while node and node.left:
+        node = node.left
+    return node
+
+
+def usun_wezel(root, key):
+    """Usuwa węzeł o podanym kluczu z BST"""
+    if root is None:
+        return root
+    if key < root.key:
+        root.left = usun_wezel(root.left, key)
+    elif key > root.key:
+        root.right = usun_wezel(root.right, key)
+    else:
+        # Brak dzieci lub jedno dziecko
+        if root.left is None:
+            return root.right
+        elif root.right is None:
+            return root.left
+        # Zastepujemy usuwany element wezlem z poddrzewa o najwiekszej wysokosci
+        if wysokosc(root.right) > wysokosc(root.left):
+            temp = get_min(root.right)
+            root.key = temp.key
+            root.right = usun_wezel(temp.right, temp.key)
+        else:
+            temp = get_max(root.left)
+            root.key = temp.key
+            root.left = usun_wezel(root.left, temp.key)
+    return root
+
+
+def rownowazenie_drzewa(root):
+    """Równoważy BST iteracyjnie usuwając i wstawiając węzły"""
+    while True:
+        unbalanced = znajdz_niezbalansowany_element(root)
+        if unbalanced is None:
+            break  # Drzewo jest zrównoważone
+
+        element_do_dodania = unbalanced.key
+        root = usun_wezel(root, unbalanced.key)  # Usuwamy zastępczy węzeł
+        root = FCFS(root, element_do_dodania)  # Wstawiamy go ponownie
+
+    return root
+
+
+# =============================================================================
+# FUNKCJA GENERUJACA
+# =============================================================================
+
+def generuj_ciag_losowy(n: int, min_val=1, max_val=1000000):
+    ciag = random.sample(range(min_val, max_val), n)
+    return ciag
+
+
+def generuj_ciag_posortowany(n: int, min_val=1, max_val=1000000):
+    ciag = sorted(random.sample(range(min_val, max_val), n))
+    return ciag
 
 
 # =============================================================================
@@ -338,9 +438,11 @@ def heap_sort(arr):
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+
 def wczytaj_dane_z_klawiatury():
     dane = input("Podaj liczby oddzielone spacją: ")
     return list(map(int, dane.strip().split()))
+
 
 def wczytaj_dane_z_pliku():
     nazwa = input("Podaj nazwę pliku: ")
@@ -351,21 +453,247 @@ def wczytaj_dane_z_pliku():
         print("Nie znaleziono pliku.")
         return []
 
+
+def wczytaj_dane_z_generatora():
+    size = [10, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000]
+
+    print("wybierz rodzaj drzewa i operacje ")
+    print("\nWybierz typ drzewa:")
+    print("1. AVL")
+    print("2. BST (FCFS)")
+    print("3. HMIN")
+    drzewo = input("> ")
+    print("\nWybierz operację:")
+    print("1. Ścieżka do min i max")
+    print("2. Równoważenie drzewa iteracyjnym usuwaniem węzłów")
+    operacja = input("> ")
+    if drzewo == '1':
+        if operacja == '1':
+            print("wyniki dla ciagu losowego : ")
+            for n in size:
+                dane = generuj_ciag_losowy(n)
+                start_czas = time.time()
+                heap_sort(dane)
+                root = AVL(dane)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas utworzenia drzewa AVL dla n = {n} wynosi : {czas:.6f} s", end="  ")
+
+                start_czas = time.time()
+                path_min, path_max = znajdz_min_i_max(root)
+                # print("Min:", path_min)
+                # print("Max:", path_max)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas operacji dla n = {n} wynosi : {czas:.6f} s")
+
+            print("wyniki dla ciagu rosnacego : ")
+            for n in size:
+                dane = generuj_ciag_posortowany(n)
+                start_czas = time.time()
+                heap_sort(dane)
+                root = AVL(dane)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas utworzenia drzewa AVL dla n = {n} wynosi : {czas:.6f} s", end="  ")
+
+                start_czas = time.time()
+                path_min, path_max = znajdz_min_i_max(root)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas operacji dla n = {n} wynosi : {czas:.6f} s")
+                success = 1
+        elif operacja == '2':
+            print("wyniki dla ciagu losowego : ")
+            for n in size:
+                dane = generuj_ciag_losowy(n)
+                start_czas = time.time()
+                heap_sort(dane)
+                root = AVL(dane)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas utworzenia drzewa AVL dla n = {n} wynosi : {czas:.6f} s", end="  ")
+
+                start_czas = time.time()
+                r = rownowazenie_drzewa(root)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas operacji dla n = {n} wynosi : {czas:.6f} s")
+
+            print("wyniki dla ciagu rosnacego : ")
+            for n in size:
+                dane = generuj_ciag_posortowany(n)
+                start_czas = time.time()
+                heap_sort(dane)
+                root = AVL(dane)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas utworzenia drzewa AVL dla n = {n} wynosi : {czas:.6f} s", end="  ")
+
+                start_czas = time.time()
+                r = rownowazenie_drzewa(root)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas operacji dla n = {n} wynosi : {czas:.6f} s")
+                success = 1
+    elif drzewo == '2':
+        if operacja == '1':
+            print("wyniki dla ciagu losowego : ")
+            for n in size:
+                dane = generuj_ciag_losowy(n)
+                start_czas = time.time()
+                root = Node(dane[0])
+                for i in dane[1:]:
+                    FCFS(root, i)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas utworzenia drzewa BST dla n = {n} wynosi : {czas:.6f} s", end="  ")
+
+                start_czas = time.time()
+                path_min, path_max = znajdz_min_i_max(root)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas operacji dla n = {n} wynosi : {czas:.6f} s")
+
+            print("\nwyniki dla ciagu rosnacego : ")
+            for n in size:
+                dane = generuj_ciag_posortowany(n)
+                start_czas = time.time()
+                root = Node(dane[0])
+                for i in dane[1:]:
+                    FCFS(root, i)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas utworzenia drzewa BST dla n = {n} wynosi : {czas:.6f} s", end="  ")
+
+                start_czas = time.time()
+                path_min, path_max = znajdz_min_i_max(root)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas operacji dla n = {n} wynosi : {czas:.6f} s")
+                success = 1
+        elif operacja == '2':
+            print("wyniki dla ciagu losowego : ")
+            for n in size:
+                dane = generuj_ciag_losowy(n)
+                start_czas = time.time()
+                root = Node(dane[0])
+                for i in dane[1:]:
+                    FCFS(root, i)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas utworzenia drzewa BST dla n = {n} wynosi : {czas:.6f} s", end="  ")
+
+                start_czas = time.time()
+                r = rownowazenie_drzewa(root)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas operacji dla n = {n} wynosi : {czas:.6f} s")
+
+            print("wyniki dla ciagu rosnacego : ")
+            for n in size:
+                dane = generuj_ciag_posortowany(n)
+                start_czas = time.time()
+                root = Node(dane[0])
+                for i in dane[1:]:
+                    FCFS(root, i)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas utworzenia drzewa BST dla n = {n} wynosi : {czas:.6f} s", end="  ")
+
+                start_czas = time.time()
+                r = rownowazenie_drzewa(root)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas operacji dla n = {n} wynosi : {czas:.6f} s")
+                success = 1
+
+    elif drzewo == '3':
+        if operacja == '1':
+            print("wyniki dla ciagu losowego : ")
+            for n in size:
+                dane = generuj_ciag_losowy(n)
+                start_czas = time.time()
+                root = HMIN(dane)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas utworzenia drzewa HMIN dla n = {n} wynosi : {czas:.6f} s", end="  ")
+
+                start_czas = time.time()
+                path_min, path_max = znajdz_min_i_max(root)
+                # print("Min:", path_min)
+                # print("Max:", path_max)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas operacji dla n = {n} wynosi : {czas:.6f} s")
+
+            print("wyniki dla ciagu rosnacego : ")
+            for n in size:
+                dane = generuj_ciag_posortowany(n)
+                start_czas = time.time()
+                root = HMIN(dane)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas utworzenia drzewa HMIN dla n = {n} wynosi : {czas:.6f} s", end="  ")
+
+                start_czas = time.time()
+                path_min, path_max = znajdz_min_i_max(root)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas operacji dla n = {n} wynosi : {czas:.6f} s")
+                success = 1
+        elif operacja == '2':
+            print("wyniki dla ciagu losowego : ")
+            for n in size:
+                dane = generuj_ciag_losowy(n)
+                start_czas = time.time()
+                root = HMIN(dane)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas utworzenia drzewa HMIN dla n = {n} wynosi : {czas:.6f} s", end="  ")
+
+                start_czas = time.time()
+                r = rownowazenie_drzewa(root)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas operacji dla n = {n} wynosi : {czas:.6f} s")
+
+            print("wyniki dla ciagu rosnacego : ")
+            for n in size:
+                dane = generuj_ciag_posortowany(n)
+                start_czas = time.time()
+                root = HMIN(dane)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas utworzenia drzewa HMIN dla n = {n} wynosi : {czas:.6f} s", end="  ")
+
+                start_czas = time.time()
+                r = rownowazenie_drzewa(root)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"Czas operacji dla n = {n} wynosi : {czas:.6f} s")
+                success = 1
+
+
 def wybierz_dane():
     while True:
         print("\nWybierz źródło danych:")
         print("1. Dane z klawiatury")
         print("2. Dane z pliku")
+        print("3. Dane wygenerowane")
         print("0. Wyjście")
         wybor = input("> ")
         if wybor == '1':
             return wczytaj_dane_z_klawiatury()
         elif wybor == '2':
             return wczytaj_dane_z_pliku()
+        elif wybor == '3':
+            return wczytaj_dane_z_generatora()
         elif wybor == '0':
             exit()
         else:
             print("Nieprawidłowy wybór.")
+
 
 def wybierz_typ_drzewa(dane):
     while True:
@@ -376,19 +704,34 @@ def wybierz_typ_drzewa(dane):
         print("0. Powrót")
         wybor = input("> ")
         if wybor == '1':
-            dane.sort()
-            return AVL(dane)
+            start_czas = time.time()
+            heap_sort(dane)
+            r = AVL(dane)
+            koniec_czas = time.time()
+            czas = koniec_czas - start_czas
+            print(f"Czas utworzenia drzewa AVL wynosi : {czas:.6f} s")
+            return r
         elif wybor == '2':
+            start_czas = time.time()
             root = Node(dane[0])
             for n in dane[1:]:
                 FCFS(root, n)
+            koniec_czas = time.time()
+            czas = koniec_czas - start_czas
+            print(f"Czas utworzenia drzewa metoda FCFS wynosi : {czas:.6f} s")
             return root
         elif wybor == '3':
-            return HMIN(dane)
+            start_czas = time.time()
+            r = HMIN(dane)
+            koniec_czas = time.time()
+            czas = koniec_czas - start_czas
+            print(f"Czas utworzenia drzewa metoda HMIN wynosi : {czas:.6f} s")
+            return r
         elif wybor == '0':
             return None
         else:
             print("Nieprawidłowy wybór.")
+
 
 def menu_operacji(root):
     while True:
@@ -398,18 +741,24 @@ def menu_operacji(root):
         print("3. Poziom i elementy dla klucza")
         print("4. Wypisz malejąco")
         print("5. Preorder, wysokość i usunięcie poddrzewa")
+        print("6. Równoważenie drzewa iteracyjnym usuwaniem węzłów")
         print("0. Powrót")
 
         success = 0
         while not success:
             wybor = input("> ")
+            start_czas = time.time()
             if wybor == '1':
                 print_tree(root)
                 success = 1
             elif wybor == '2':
+                start_czas = time.time()
                 path_min, path_max = znajdz_min_i_max(root)
                 print("Min:", path_min)
                 print("Max:", path_max)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"\nCzas wykonania wynosi : {czas:.6f} s")
                 success = 1
             elif wybor == '3':
                 klucz = int(input("Podaj klucz: "))
@@ -423,6 +772,17 @@ def menu_operacji(root):
                 klucz = int(input("Podaj klucz korzenia poddrzewa: "))
                 wypisanie_preorder_podanie_wysokosci_i_usuniecie_poddrzewa(root, klucz)
                 success = 1
+            elif wybor == '6':
+                start_czas = time.time()
+                print("Drzewo przed zrównoważeniem : ")
+                print_preorder(root)
+                root = rownowazenie_drzewa(root)
+                print("\nDrzewo po zrównoważeniu : ")
+                print_preorder(root)
+                koniec_czas = time.time()
+                czas = koniec_czas - start_czas
+                print(f"\nCzas wykonania wynosi : {czas:.6f} s")
+                success = 1
             elif wybor == '0':
                 break
             else:
@@ -432,6 +792,7 @@ def menu_operacji(root):
                 clear()
         if wybor == '0':
             break
+
 
 # Główna pętla programu
 def main():
@@ -443,6 +804,7 @@ def main():
         root = wybierz_typ_drzewa(dane)
         if root:
             menu_operacji(root)
+
 
 if __name__ == "__main__":
     main()
