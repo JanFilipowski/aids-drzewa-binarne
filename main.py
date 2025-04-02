@@ -85,14 +85,23 @@ def szukanie_elementu(node, n):
     :param n: Klucz szukanego węzła.
     :return: Węzeł o kluczu n lub None, jeśli nie znaleziono.
     """
-    if node is None:
-        return None
-    if node.key == n:
-        return node
-    elif n < node.key:
+    if is_HMIN:
+        if node is None:
+            return None
+        if node.key == n:
+            return node
         return szukanie_elementu(node.left, n)
-    else:
         return szukanie_elementu(node.right, n)
+    else:
+        if node is None:
+            return None
+        if node.key == n:
+            return node
+        elif n < node.key:
+            return szukanie_elementu(node.left, n)
+        else:
+            return szukanie_elementu(node.right, n)
+
 
 
 def usuwanie(node):
