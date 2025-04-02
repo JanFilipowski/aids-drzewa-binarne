@@ -104,20 +104,20 @@ def szukanie_elementu(node, n):
 
 
 
-def usuwanie(node):
+def usuwanie(root, key):
     """
-    Usuwa (dezaktywuje) poddrzewo – symuluje usuwanie przez ustawienie kluczy na None
-    i zerwanie referencji do dzieci.
-
-    :param node: Korzeń poddrzewa do usunięcia.
+    Usuwa z drzewa poddrzewo o korzeniu 'key'.
+    Zwraca nowy korzeń drzewa po usunięciu.
     """
-    if node is None:
-        return
-    usuwanie(node.left)
-    usuwanie(node.right)
-    node.key = None
-    node.left = None
-    node.right = None
+    if root is None:
+        return None
+    if root.key == key:
+        # Znaleźliśmy węzeł do usunięcia – odcinamy całe poddrzewo
+        return None
+    # Rekurencyjnie przeszukujemy lewe i prawe poddrzewo
+    root.left = usuwanie(root.left, key)
+    root.right = usuwanie(root.right, key)
+    return root
 
 
 def wypisanie_preorder_podanie_wysokosci_i_usuniecie_poddrzewa(root, n):
@@ -137,7 +137,7 @@ def wypisanie_preorder_podanie_wysokosci_i_usuniecie_poddrzewa(root, n):
     print("Preorder poddrzewa:")
     print_preorder(node)
     print("\nWysokość poddrzewa:", wysokosc(node))
-    usuwanie(node)
+    root = usuwanie(root, n)
     print("Poddrzewo usunięte.")
 
 
@@ -750,7 +750,8 @@ def menu_operacji(root):
         print("3. Poziom i elementy dla klucza")
         print("4. Wypisz malejąco")
         print("5. Preorder, wysokość i usunięcie poddrzewa")
-        print("6. Równoważenie drzewa iteracyjnym usuwaniem węzłów")
+        if not is_HMIN:
+            print("6. Równoważenie drzewa iteracyjnym usuwaniem węzłów")
         print("0. Powrót")
 
         success = 0
@@ -781,7 +782,7 @@ def menu_operacji(root):
                 klucz = int(input("Podaj klucz korzenia poddrzewa: "))
                 wypisanie_preorder_podanie_wysokosci_i_usuniecie_poddrzewa(root, klucz)
                 success = 1
-            elif wybor == '6':
+            elif not is_HMIN and wybor == '6':
                 start_czas = time.time()
                 print("Drzewo przed zrównoważeniem : ")
                 print_preorder(root)
