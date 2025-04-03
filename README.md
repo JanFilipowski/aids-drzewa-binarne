@@ -17,17 +17,12 @@ Projekt w języku Python umożliwiający budowę i operacje na strukturach drzew
   - Wypisanie elementów w porządku malejącym
   - Preorder, obliczenie wysokości i usunięcie poddrzewa wskazanego przez użytkownika
   - Wizualizacja drzewa w konsoli
+  - Algorytm równoważenia drzewa BST przez rotacje (algorytm DSW) lub przez usuwanie korzenia
+  - Pomiar czasu działania operacji
 
 - Interfejs:
   - Menu tekstowe
   - Obsługa danych z klawiatury i pliku
-
----
-
-## Funkcje do zaimplementowania
-
-- Algorytm równoważenia drzewa BST przez rotacje (algorytm DSW) lub przez usuwanie korzenia
-- Pomiar czasu działania operacji
-- Generator danych testowych
+  - Generator danych testowych
 
 ---
